@@ -1,64 +1,51 @@
-pipeline {
-    agent any
-    environment {
-        name = 'komal'
+ pipeline{
+    agent any 
+    tools {
+        maven 'Maven'
     }
-    parameters {
-        string(name: 'person',defaultValue: 'komal nade',description: "who are you")
-        booleanParam(name: 'isFemale',defaultValue: true,description: "")
-        choice(name: 'City',choices: ['Mumbai','Pune','Bangalore'],description: "")
-    }
+    stages{
+        stage("Test"){
+            steps{
+                // mvn test
+                sh "mvn test"
+    
+            }
 
-    stages {
-        stage('Run A Command') {
-            steps {
-                sh '''
-                date
-                ls
-                pwd
-                cal 2021
-                '''
-                
+        }
+            stage("build"){
+            steps{
+                // mvn package
+                sh "mnv package"
                 
             }
+
         }
-        stage('Environment Variables') {
-            steps {
-                sh 'echo "${BUILD_ID}"'
-                sh 'echo "${name}"'
+        stage("Deploy on Test"){
+            steps{
+                // deploy on container -> plugin
+                deploy adapters: [tomcat9(credentialsId: 'tomcatserverdetails1', path: '', url: 'http://15.206.28.52:8085')], contextPath: '/app', war: '**/*.war'
+                
+            }
+
+        }
+        stage("Deploy on Prod"){
+            steps{
+                // deploy on container -> plugin
+                deploy adapters: [tomcat9(credentialsId: 'tomcatserverdetails1', path: '', url: 'http://43.205.114.163:8085')], contextPath: '/app', war: '**/*.war'
+                
             }
         }
-        stage('Parameters') {
-            steps {
-                echo 'deploy on test'
-                sh 'echo "${name}"'
-                sh 'echo "${person}"'
+
+        }
+            post{
+                always{
+                    echo "========always========"
+                }
+                success{
+                    echo "========A executed successfully========"
+                }
+                failure{
+                    echo "========A execution failed========"
+                }
             }
         }
-        stage('Continue ?') {
-            input {
-                message "Should we continue?"
-                ok "Yes we should"
-            }
-            steps {
-                echo 'deploy on prod'
-            }
-        }
-        stage('Deploy on prod') {
-            steps {
-                echo 'deploy on prod'
-            }
-        } 
-    }
-    post{
-        always {
-            echo "I will always say Hello again!"
-        }
-        failure {
-            echo "Failure"
-        }
-        success {
-            echo "Success"
-        }
-    }
-}
